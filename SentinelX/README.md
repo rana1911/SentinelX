@@ -1,0 +1,38 @@
+# SentinelX
+
+SentinelX is a smart-contract auditing application that generates exploit
+hypotheses, runs them with Foundry, and verifies the results.
+
+## Packages
+
+- **`agent`** - connects to the configured language-model provider.
+- **`hypothesize`** - proposes vulnerability hypotheses from contract source.
+- **`ingest`** - converts a Foundry project into an audit specification.
+- **`keccak`** - provides Ethereum-compatible Keccak-256 hashing and selectors.
+- **`orchestrator`** - coordinates generation, execution, retries, and verification.
+- **`report`** - creates Markdown audit reports.
+- **`runner`** - renders exploit harnesses and runs them with Foundry.
+- **`trace`** - parses Foundry's structured execution traces.
+- **`verify`** - checks exploit provenance, harness integrity, target calls,
+  mechanisms, and value flow.
+
+## Run the application
+
+Requirements: Go 1.22 or later, Foundry (`forge`), and an API key for the
+selected model provider.
+
+```bash
+go run ./cmd/sentinelx -project /path/to/forge-project -auto -report report.md
+```
+
+For Claude, set the API key before running:
+
+```bash
+export ANTHROPIC_API_KEY=your-api-key
+```
+
+Run the tests with:
+
+```bash
+go test ./...
+```
