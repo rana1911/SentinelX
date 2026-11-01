@@ -14,7 +14,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/rana1911/sentinelx/internal/agent"
+	"github.com/rana1911/exploitforge/internal/agent"
 )
 
 // Completer is the subset of the model client this stage needs (satisfied by

@@ -3,9 +3,9 @@ package orchestrator
 import (
 	"context"
 
-	"github.com/rana1911/sentinelx/internal/agent"
-	"github.com/rana1911/sentinelx/internal/runner"
-	"github.com/rana1911/sentinelx/internal/verify"
+	"github.com/rana1911/exploitforge/internal/agent"
+	"github.com/rana1911/exploitforge/internal/runner"
+	"github.com/rana1911/exploitforge/internal/verify"
 )
 
 // Verdict mirrors verify.Verdict at the orchestrator boundary.

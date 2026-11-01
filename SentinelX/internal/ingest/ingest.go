@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rana1911/sentinelx/internal/runner"
+	"github.com/rana1911/exploitforge/internal/runner"
 )
 
 // AbiArg is one input/output parameter.

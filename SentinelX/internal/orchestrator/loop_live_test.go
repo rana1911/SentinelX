@@ -7,26 +7,26 @@ import (
 	"testing"
 	"time"
 
-	"github.com/rana1911/sentinelx/internal/agent"
-	"github.com/rana1911/sentinelx/internal/runner"
-	"github.com/rana1911/sentinelx/internal/verify"
+	"github.com/rana1911/exploitforge/internal/agent"
+	"github.com/rana1911/exploitforge/internal/runner"
+	"github.com/rana1911/exploitforge/internal/verify"
 )
 
 // End-to-end: a SCRIPTED fake Spark supplies exploit code, the REAL
 // ForgeRunner compiles and runs it with real forge, and verify.Decide
 // renders the verdict. This exercises the entire wired pipeline (gaps #1+#2)
-// minus the live LLM. Skipped unless SENTINELX_PROJECT + forge are set.
+// minus the live LLM. Skipped unless EXPLOITFORGE_PROJECT + forge are set.
 
 func liveLoopEnv(t *testing.T) (dir, solc string) {
 	t.Helper()
-	base := os.Getenv("SENTINELX_PROJECT")
+	base := os.Getenv("EXPLOITFORGE_PROJECT")
 	if base == "" {
-		t.Skip("set SENTINELX_PROJECT to run live loop tests")
+		t.Skip("set EXPLOITFORGE_PROJECT to run live loop tests")
 	}
 	if _, err := exec.LookPath("forge"); err != nil {
 		t.Skip("forge not on PATH")
 	}
-	return freshForgeProject(t, base), os.Getenv("SENTINELX_SOLC")
+	return freshForgeProject(t, base), os.Getenv("EXPLOITFORGE_SOLC")
 }
 
 func liveVaultConfig() runner.Config {

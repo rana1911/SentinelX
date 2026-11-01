@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// freshForgeProject copies the base project (SENTINELX_PROJECT) into an
+// freshForgeProject copies the base project (EXPLOITFORGE_PROJECT) into an
 // isolated temp dir — foundry.toml + src/ copied, lib/ symlinked (forge-std
 // is large and read-only, so a symlink is enough). This gives each test its
 // OWN project, mirroring how the RunnerFactory hands each concurrent task an

@@ -1,38 +1,235 @@
-# SentinelX
+# ExploitForge
 
-SentinelX is a smart-contract auditing application that generates exploit
-hypotheses, runs them with Foundry, and verifies the results.
+A self-verifying smart-contract auditor: Muse Spark hypothesizes
+vulnerabilities and writes Foundry exploit tests; a **deterministic,
+model-free verification layer** decides whether each exploit genuinely
+demonstrates the claimed bug. Only findings that survive every check are
+reported.
+
+`go build ./...` and `go test ./...` pass with no network or API keys
+(36 tests; the anti-cheat suite runs against **real** `forge` output
+checked in under `internal/verify/testdata/`).
 
 ## Packages
 
-- **`agent`** - connects to the configured language-model provider.
-- **`hypothesize`** - proposes vulnerability hypotheses from contract source.
-- **`ingest`** - converts a Foundry project into an audit specification.
-- **`keccak`** - provides Ethereum-compatible Keccak-256 hashing and selectors.
-- **`orchestrator`** - coordinates generation, execution, retries, and verification.
-- **`report`** - creates Markdown audit reports.
-- **`runner`** - renders exploit harnesses and runs them with Foundry.
-- **`trace`** - parses Foundry's structured execution traces.
-- **`verify`** - checks exploit provenance, harness integrity, target calls,
-  mechanisms, and value flow.
+- **`internal/agent`** — Muse Spark client (OpenAI-compatible chat endpoint
+  assumed; adjust once the real Meta Model API shape is confirmed), with
+  retry/backoff and tolerant JSON/code extraction.
+- **`internal/hypothesize`** — the front of the pipeline: shows contract
+  source to the model and parses a validated list of suspected
+  vulnerabilities (`agent.Hypothesis`) for the loop to prove. High-recall by
+  design; it only proposes leads, the verify layer decides truth.
+- **`internal/keccak`** — zero-dependency Keccak-256 (Ethereum variant), so
+  the verifier can compute real 4-byte function selectors without any
+  external module. Validated against known vectors and well-known selectors.
+- **`internal/trace`** — parser for Foundry's **structured**
+  `forge test --json -vvvv` output: the actual call-graph (per-call depth,
+  caller, callee, calldata, value, success), not the pretty-printed text.
+  This is what makes provenance-based checks possible.
+- **`internal/runner`** — the execution machine: renders the fixed harness
+  around the model's attack code, runs `forge test --json -vvvv`, and
+  returns a parsed `RunResult` (compiled? passed? structured trace, resolved
+  target + attacker addresses). The `Backend` interface separates HOW forge
+  runs: a `LocalBackend` (used in tests/CI with trusted input) and a
+  Docker-sandbox backend (production, for untrusted AI-written code) are
+  interchangeable. A single runner is not safe for concurrent runs — the
+  `RunnerFactory` gives each parallel task its own project/sandbox.
+- **`internal/verify`** — the verification layer (see below).
+- **`internal/ingest`** — turns a Foundry project into an audit spec: runs
+  `forge build`, reads the target contract's ABI, and synthesizes the deploy,
+  seed, and assertion setup. Structural facts are exact; constructor-arg
+  values and seeding are best-effort and flagged for review.
+- **`internal/report`** — renders a set of per-hypothesis results into a
+  Markdown audit report: verified findings first, each with its reproducible
+  proof-of-concept and trace evidence, then a table of what was not confirmed.
+- **`internal/orchestrator`** — the generate → source pre-filter → **run real
+  forge** → **verdict engine** retry loop, and the concurrent worker pool.
+  The loop's final decision comes from `verify.Decide` on the structured
+  trace; Spark and the runner are both interfaces, so the whole loop is
+  tested end-to-end with a scripted fake AI driving real forge.
 
-## Run the application
+## Verification is class-independent (success invariants)
 
-Requirements: Go 1.22 or later, Foundry (`forge`), and an API key for the
-selected model provider.
+A finding is proven when the exploit **breaks a per-hypothesis invariant**, not
+when it matches a known bug pattern. The hypothesize stage emits, with each
+hypothesis, a `success_assertion` — a Solidity invariant that holds on a safe
+contract but is false once the bug is exploited (e.g. `assertGt(attacker.balance,
+preAttackerBalance)`, `assertEq(target.owner(), attacker)`,
+`assertLt(address(target).balance, preTargetBalance)`). It is rendered into the
+fixed harness, so the exploit author cannot weaken it, and `verify.Decide` gates
+on it via `CheckSuccessPredicate`, which statically rejects hollow predicates
+(trivially true, literal-only, self-comparing, reads no state, or smuggles
+cheatcodes). Profit claims are additionally gated on independent trace-derived
+value flow. The vulnerability `class` is only an advisory label for the report;
+a dedicated detector (reentrancy re-entry) adds bonus evidence when present but
+never decides the verdict. This is what lets the tool verify bug classes it has
+no hand-coded detector for.
 
-```bash
-go run ./cmd/sentinelx -project /path/to/forge-project -auto -report report.md
+## Verification layer — why a passing test is not enough
+
+A `forge` [PASS] proves almost nothing on its own: the model can cheat with
+test tooling, or write a vacuous exploit that profits through an unrelated
+path. `verify.Decide` only returns **Verified** when ALL of these hold:
+
+1. **forge reported PASS** — the exploit executed and the assertion held.
+2. **Harness integrity** (`CheckHarnessIntegrity`) — the model edited ONLY
+   the text between `// MODEL_BEGIN` / `// MODEL_END`; `setUp()`,
+   `test_exploit()` and the success assertion are byte-identical to the
+   fixed template. (Stops the model from weakening the assertion itself.)
+3. **Cheatcode provenance** (`CheckCheatcodeProvenance`) — no call to the
+   Foundry cheatcode address (`0x7109…1D12D`) is reachable from model code,
+   **by any route**. Works on the execution trace, so it catches:
+   - a cheatcode called inline in `attack()`, and
+   - a cheatcode called from a model-deployed helper via **raw calldata
+     bytes with zero identifiers a source scan could ever match** (the
+     obfuscation case a regex is structurally blind to).
+4. **Target invocation** (`CheckTargetFunctionInvoked`) — the claimed
+   vulnerable function was actually called on the target contract. Profit
+   through an unrelated contract does not count.
+5. **Class-specific mechanism** — e.g. for reentrancy,
+   `CheckReentrancy` proves the target was genuinely **re-entered** (a call
+   into it nested inside a still-open call into it), not merely called
+   twice.
+6. **Independent value-flow** (`ComputeAttackerValueFlow`) — net attacker
+   ETH is recomputed from trace call-values, independently of the Solidity
+   assertion, as corroboration.
+
+Failing 1–5 → **Rejected**; unparseable/uninstallable → **Inconclusive**.
+
+The regex source scan (`CheckSource`) is kept as a cheap first-pass filter
+only; it is explicitly **not** trusted as proof — the trace-based checks are.
+
+## Adversarial evidence (`internal/verify/testdata/`)
+
+Four real contracts were run through actual `forge` and their JSON traces
+checked in. The test suite proves `Decide` reaches the right verdict for the
+right reason on each:
+
+| Fixture | forge result | Verdict | Caught by |
+|---|---|---|---|
+| `honest_exploit` | PASS | **Verified** | re-entry + value flow confirmed |
+| `cheat_inline` | PASS | **Rejected** | provenance (inline `vm.deal`) |
+| `cheat_helper_obfuscated` | PASS | **Rejected** | provenance (raw-calldata cheat, invisible to source scan) |
+| `vacuous_exploit` | PASS | **Rejected** | target never invoked |
+
+Every one of these **passed in forge** — that is the point.
+
+## Validation tooling
+
+`cmd/adversarial_check` replays the fixtures through the verify package and
+prints each verdict with evidence. Regenerate fixtures by running the
+contracts in a Foundry project (see `templates/`) with
+`forge test --match-contract <Name> --json -vvvv`.
+
+## Running the tests
+
+```
+go test ./...     # 40 tests, no forge/network/keys needed
 ```
 
-For Claude, set the API key before running:
+The 5 live tests (real forge end-to-end) run when you point them at a forge
+project containing `src/VulnerableVault.sol`:
 
-```bash
-export ANTHROPIC_API_KEY=your-api-key
+```
+EXPLOITFORGE_PROJECT=/path/to/project EXPLOITFORGE_SOLC=/path/to/solc go test ./...
 ```
 
-Run the tests with:
+They cover the fully wired loop: a scripted fake Spark supplies exploit
+code, the real runner compiles and runs it, and `verify.Decide` judges it —
+honest exploit → Verified (with reentrancy + value-flow evidence); inline
+cheat → Rejected at the source pre-filter; **obfuscated cheat** (passes the
+source scan, compiles, passes forge) → Rejected by the trace-provenance
+engine.
 
-```bash
-go test ./...
+## Running it against a live model
+
+The `cmd/exploitforge` binary wires a real LLM to the runner and verify loop:
+
 ```
+export ANTHROPIC_API_KEY=sk-...        # provider auto-detects to Claude
+# point-at-a-repo: ingest + hypothesize + prove + report, no hand-written spec
+go run ./cmd/exploitforge -project /path/to/forge-project -auto -solc $(which solc) -report report.md
+
+# or generate a spec to review/edit first, then audit with it:
+go run ./cmd/exploitforge -project /path/to/forge-project -ingest > audit.json
+go run ./cmd/exploitforge -project /path/to/forge-project -audit audit.json -solc $(which solc) -report report.md
+
+# just the front stage: propose vulnerabilities for a contract
+go run ./cmd/exploitforge -hypothesize path/to/Contract.sol
+
+go run ./cmd/exploitforge -print-example > job.json   # for the bundled vault
+go run ./cmd/exploitforge -project /path/to/forge-project -job job.json -solc $(which solc)
+```
+
+The model backend is chosen by `agent.NewFromEnv`:
+
+- **Claude** (`EXPLOITFORGE_PROVIDER=claude`, or auto when `ANTHROPIC_API_KEY`
+  is set) — Anthropic's OpenAI-compatible endpoint. The client omits
+  `temperature` (current Claude models reject values < 1), skips
+  `response_format` (unsupported; `ExtractCode`/`ExtractJSON` cope), and sends
+  `max_tokens`. Override with `CLAUDE_MODEL`, `CLAUDE_API_BASE`,
+  `ANTHROPIC_WORKSPACE_ID`.
+- **Meta Muse Spark** (`EXPLOITFORGE_PROVIDER=meta`) — `META_API_BASE`,
+  `META_API_KEY`, `META_MODEL`. The hackathon target; the request shape is
+  assumed OpenAI-compatible, confirm against Meta's docs and adjust
+  `agent.newMeta` / `once` if needed.
+
+Claude is the development stand-in; the submitted build must run on a Meta
+model. Because the loop depends only on the `Completer` interface, switching
+providers is one env var — no loop/runner/verify changes.
+
+## Still to build
+
+- **Docker-sandbox `Backend`** for `internal/runner` (the `LocalBackend` and
+  the interface exist; the sandboxed backend for untrusted code is the swap).
+- Optional dedicated mechanism detectors (reentrancy exists; access-control,
+  oracle, share-inflation would add bonus evidence on top of the invariant gate).
+- Confirm/wire the real Meta Muse Spark API for submission.
+
+
+
+## Interactive server (`cmd/exploitforge-server`)
+
+Runs the audit behind HTTP and streams progress to the web UI, so you can
+submit a GitHub repo in the browser and watch it get audited live.
+
+```
+# build the UI once, then run the server (it serves the UI + the API):
+cd web && npm install && npm run build && cd ..
+go run ./cmd/exploitforge-server -solc $(which solc)        # http://localhost:8080
+```
+
+- `GET /api/health` — provider/model status.
+- `GET /api/audit?repo=<github url>` — Server-Sent Events: each pipeline stage,
+  a verdict per hypothesis, then the final JSON report.
+
+The server clones the repo, runs `forge build` (installing `forge-std` if the
+repo didn't vendor it), then ingests → hypothesizes → proves → reports.
+
+For local development you can run the UI with `npm run dev` (its dev server
+proxies `/api` to `:8080`), and set `EXPLOITFORGE_ALLOW_LOCAL=1` to audit a
+local project path instead of a GitHub URL.
+
+> **Security:** an audit compiles and runs code from the submitted repo *and*
+> AI-written exploits — untrusted code on the host. Run the server inside a
+> sandbox (container/VM, no secrets, limited network) before exposing it. The
+> Docker execution backend (an existing `runner.Backend` interface) is the
+> intended isolation layer for this.
+
+## Web UI (`web/`)
+
+A React + Vite dashboard that renders an audit report: summary tiles, the
+ingest→hypothesize→exploit→verify→report pipeline, and per-finding cards with
+the success invariant, trace evidence, attack path, and reproducible PoC.
+
+```
+# produce a machine-readable report from an audit:
+go run ./cmd/exploitforge -project ./demo -auto -solc $(which solc) -report-json web/public/audit.json
+
+# then run the UI:
+cd web && npm install && npm run dev      # or: npm run build
+```
+
+The UI fetches `audit.json` at runtime and falls back to a bundled sample, so
+it renders with or without a backend.
+

@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rana1911/sentinelx/internal/agent"
-	"github.com/rana1911/sentinelx/internal/runner"
+	"github.com/rana1911/exploitforge/internal/agent"
+	"github.com/rana1911/exploitforge/internal/runner"
 )
 
 // fakeSpark returns canned completions in order, then repeats the last one.

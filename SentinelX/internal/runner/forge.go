@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rana1911/sentinelx/internal/trace"
+	"github.com/rana1911/exploitforge/internal/trace"
 )
 
 // RunResult is the structured outcome of one forge execution. This replaces

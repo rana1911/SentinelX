@@ -11,7 +11,7 @@
 //     the Meta Model API docs for the real path, auth header and JSON-mode
 //     flag, then adjust newMeta() / once(). Everything else is shared.
 //
-// Pick the provider with SENTINELX_PROVIDER=claude|meta (see NewFromEnv).
+// Pick the provider with EXPLOITFORGE_PROVIDER=claude|meta (see NewFromEnv).
 package agent
 
 import (
@@ -64,7 +64,7 @@ type Client struct {
 	ExtraHeaders    map[string]string // e.g. anthropic-workspace-id
 }
 
-// NewFromEnv builds a client for the provider in SENTINELX_PROVIDER
+// NewFromEnv builds a client for the provider in EXPLOITFORGE_PROVIDER
 // ("claude" or "meta"). If unset, it picks claude when ANTHROPIC_API_KEY is
 // set, otherwise meta.
 //
@@ -75,7 +75,7 @@ type Client struct {
 //
 // meta:   META_API_BASE, META_API_KEY, META_MODEL (all required).
 func NewFromEnv() (*Client, error) {
-	p := Provider(strings.ToLower(strings.TrimSpace(os.Getenv("SENTINELX_PROVIDER"))))
+	p := Provider(strings.ToLower(strings.TrimSpace(os.Getenv("EXPLOITFORGE_PROVIDER"))))
 	if p == "" {
 		if os.Getenv("ANTHROPIC_API_KEY") != "" {
 			p = ProviderClaude
@@ -89,7 +89,7 @@ func NewFromEnv() (*Client, error) {
 	case ProviderMeta:
 		return newMeta()
 	default:
-		return nil, fmt.Errorf("unknown SENTINELX_PROVIDER %q (want claude or meta)", p)
+		return nil, fmt.Errorf("unknown EXPLOITFORGE_PROVIDER %q (want claude or meta)", p)
 	}
 }
 

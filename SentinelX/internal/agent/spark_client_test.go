@@ -96,7 +96,7 @@ func TestClaudeRequestShape(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	t.Setenv("SENTINELX_PROVIDER", "claude")
+	t.Setenv("EXPLOITFORGE_PROVIDER", "claude")
 	t.Setenv("ANTHROPIC_API_KEY", "sk-test")
 	t.Setenv("CLAUDE_API_BASE", srv.URL+"/v1/")
 	t.Setenv("CLAUDE_MODEL", "")
@@ -135,7 +135,7 @@ func TestMetaRequestStillSendsTemperature(t *testing.T) {
 		writeChat(w, "ok")
 	}))
 	defer srv.Close()
-	t.Setenv("SENTINELX_PROVIDER", "meta")
+	t.Setenv("EXPLOITFORGE_PROVIDER", "meta")
 	t.Setenv("META_API_BASE", srv.URL)
 	t.Setenv("META_API_KEY", "k")
 	t.Setenv("META_MODEL", "muse-spark")
@@ -150,7 +150,7 @@ func TestMetaRequestStillSendsTemperature(t *testing.T) {
 }
 
 func TestProviderAutoDetectAndErrors(t *testing.T) {
-	t.Setenv("SENTINELX_PROVIDER", "")
+	t.Setenv("EXPLOITFORGE_PROVIDER", "")
 	t.Setenv("ANTHROPIC_API_KEY", "sk")
 	c, err := NewFromEnv()
 	if err != nil || c.Provider != ProviderClaude {
@@ -161,7 +161,7 @@ func TestProviderAutoDetectAndErrors(t *testing.T) {
 	if _, err := NewFromEnv(); err == nil {
 		t.Fatal("expected error with no credentials")
 	}
-	t.Setenv("SENTINELX_PROVIDER", "gpt")
+	t.Setenv("EXPLOITFORGE_PROVIDER", "gpt")
 	if _, err := NewFromEnv(); err == nil {
 		t.Fatal("expected error for unknown provider")
 	}

@@ -9,21 +9,21 @@ import (
 )
 
 // These tests run REAL forge against a REAL forge project. They are skipped
-// automatically if forge isn't installed or SENTINELX_PROJECT isn't set,
+// automatically if forge isn't installed or EXPLOITFORGE_PROJECT isn't set,
 // so `go test ./...` stays green in environments without forge; set
-// SENTINELX_PROJECT=/path/to/forge/project (with src/VulnerableVault.sol)
-// and SENTINELX_SOLC=/path/to/solc to exercise them.
+// EXPLOITFORGE_PROJECT=/path/to/forge/project (with src/VulnerableVault.sol)
+// and EXPLOITFORGE_SOLC=/path/to/solc to exercise them.
 
 func liveProject(t *testing.T) (dir, solc string) {
 	t.Helper()
-	base := os.Getenv("SENTINELX_PROJECT")
+	base := os.Getenv("EXPLOITFORGE_PROJECT")
 	if base == "" {
-		t.Skip("set SENTINELX_PROJECT to run live forge tests")
+		t.Skip("set EXPLOITFORGE_PROJECT to run live forge tests")
 	}
 	if _, err := exec.LookPath("forge"); err != nil {
 		t.Skip("forge not on PATH")
 	}
-	return freshForgeProject(t, base), os.Getenv("SENTINELX_SOLC")
+	return freshForgeProject(t, base), os.Getenv("EXPLOITFORGE_SOLC")
 }
 
 // localDeployVaultConfig builds a Config that deploys VulnerableVault, seeds

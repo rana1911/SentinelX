@@ -1,3 +1,3 @@
-module github.com/rana1911/sentinelx
+module github.com/rana1911/exploitforge
 
 go 1.22
