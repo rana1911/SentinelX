@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/rana1911/exploitforge/internal/agent"
-	"github.com/rana1911/exploitforge/internal/ingest"
-	"github.com/rana1911/exploitforge/internal/pipeline"
-	"github.com/rana1911/exploitforge/internal/report"
-	"github.com/rana1911/exploitforge/internal/runner"
+	"github.com/rana1911/sentinelx/internal/agent"
+	"github.com/rana1911/sentinelx/internal/ingest"
+	"github.com/rana1911/sentinelx/internal/pipeline"
+	"github.com/rana1911/sentinelx/internal/report"
+	"github.com/rana1911/sentinelx/internal/runner"
 )
 
 // AuditSpec is the hand-written / ingested harness configuration for a target
@@ -108,7 +108,7 @@ func runAudit(opts auditOpts) int {
 	}
 	progress := func(e pipeline.Event) {
 		if e.Message != "" {
-			fmt.Fprintf(os.Stderr, "exploitforge: %s\n", e.Message)
+			fmt.Fprintf(os.Stderr, "sentinelx: %s\n", e.Message)
 		}
 	}
 
@@ -131,7 +131,7 @@ func runAudit(opts auditOpts) int {
 	if err != nil {
 		fail(err)
 	}
-	fmt.Fprintf(os.Stderr, "exploitforge: provider=%s model=%s auditing %s\n", client.Provider, client.Model, spec.Contract)
+	fmt.Fprintf(os.Stderr, "sentinelx: provider=%s model=%s auditing %s\n", client.Provider, client.Model, spec.Contract)
 
 	results, _, err := pipeline.Run(ctx, client, spec, popts, progress)
 	if err != nil {
@@ -151,7 +151,7 @@ func runAudit(opts auditOpts) int {
 	}
 	report.Markdown(out, spec.Contract, results)
 	if opts.reportPath != "" {
-		fmt.Fprintf(os.Stderr, "exploitforge: report written to %s\n", opts.reportPath)
+		fmt.Fprintf(os.Stderr, "sentinelx: report written to %s\n", opts.reportPath)
 	}
 
 	if opts.reportJSONPath != "" {
@@ -163,7 +163,7 @@ func runAudit(opts auditOpts) int {
 		if err := report.WriteJSON(f, spec.Contract, string(client.Provider), client.Model, results); err != nil {
 			fail(err)
 		}
-		fmt.Fprintf(os.Stderr, "exploitforge: JSON report written to %s\n", opts.reportJSONPath)
+		fmt.Fprintf(os.Stderr, "sentinelx: JSON report written to %s\n", opts.reportJSONPath)
 	}
 
 	if s.Verified == 0 {
@@ -183,7 +183,7 @@ func ingestSpec(projectDir, contract, solc string, timeout time.Duration) (*Audi
 	}
 	gen := ingest.Synthesize(tgt, ingest.SynthOptions{})
 	for _, n := range gen.Notes {
-		fmt.Fprintf(os.Stderr, "exploitforge: ingest note: %s\n", n)
+		fmt.Fprintf(os.Stderr, "sentinelx: ingest note: %s\n", n)
 	}
 	return &AuditSpec{
 		Mode:             gen.Mode,

@@ -1,4 +1,4 @@
-# ExploitForge
+# SentinelX
 
 A self-verifying smart-contract auditor: Muse Spark hypothesizes
 vulnerabilities and writes Foundry exploit tests; a **deterministic,
@@ -131,7 +131,7 @@ The 5 live tests (real forge end-to-end) run when you point them at a forge
 project containing `src/VulnerableVault.sol`:
 
 ```
-EXPLOITFORGE_PROJECT=/path/to/project EXPLOITFORGE_SOLC=/path/to/solc go test ./...
+SENTINELX_PROJECT=/path/to/project SENTINELX_SOLC=/path/to/solc go test ./...
 ```
 
 They cover the fully wired loop: a scripted fake Spark supplies exploit
@@ -143,33 +143,33 @@ engine.
 
 ## Running it against a live model
 
-The `cmd/exploitforge` binary wires a real LLM to the runner and verify loop:
+The `cmd/sentinelx` binary wires a real LLM to the runner and verify loop:
 
 ```
 export ANTHROPIC_API_KEY=sk-...        # provider auto-detects to Claude
 # point-at-a-repo: ingest + hypothesize + prove + report, no hand-written spec
-go run ./cmd/exploitforge -project /path/to/forge-project -auto -solc $(which solc) -report report.md
+go run ./cmd/sentinelx -project /path/to/forge-project -auto -solc $(which solc) -report report.md
 
 # or generate a spec to review/edit first, then audit with it:
-go run ./cmd/exploitforge -project /path/to/forge-project -ingest > audit.json
-go run ./cmd/exploitforge -project /path/to/forge-project -audit audit.json -solc $(which solc) -report report.md
+go run ./cmd/sentinelx -project /path/to/forge-project -ingest > audit.json
+go run ./cmd/sentinelx -project /path/to/forge-project -audit audit.json -solc $(which solc) -report report.md
 
 # just the front stage: propose vulnerabilities for a contract
-go run ./cmd/exploitforge -hypothesize path/to/Contract.sol
+go run ./cmd/sentinelx -hypothesize path/to/Contract.sol
 
-go run ./cmd/exploitforge -print-example > job.json   # for the bundled vault
-go run ./cmd/exploitforge -project /path/to/forge-project -job job.json -solc $(which solc)
+go run ./cmd/sentinelx -print-example > job.json   # for the bundled vault
+go run ./cmd/sentinelx -project /path/to/forge-project -job job.json -solc $(which solc)
 ```
 
 The model backend is chosen by `agent.NewFromEnv`:
 
-- **Claude** (`EXPLOITFORGE_PROVIDER=claude`, or auto when `ANTHROPIC_API_KEY`
+- **Claude** (`SENTINELX_PROVIDER=claude`, or auto when `ANTHROPIC_API_KEY`
   is set) — Anthropic's OpenAI-compatible endpoint. The client omits
   `temperature` (current Claude models reject values < 1), skips
   `response_format` (unsupported; `ExtractCode`/`ExtractJSON` cope), and sends
   `max_tokens`. Override with `CLAUDE_MODEL`, `CLAUDE_API_BASE`,
   `ANTHROPIC_WORKSPACE_ID`.
-- **Meta Muse Spark** (`EXPLOITFORGE_PROVIDER=meta`) — `META_API_BASE`,
+- **Meta Muse Spark** (`SENTINELX_PROVIDER=meta`) — `META_API_BASE`,
   `META_API_KEY`, `META_MODEL`. The hackathon target; the request shape is
   assumed OpenAI-compatible, confirm against Meta's docs and adjust
   `agent.newMeta` / `once` if needed.
@@ -188,7 +188,7 @@ providers is one env var — no loop/runner/verify changes.
 
 
 
-## Interactive server (`cmd/exploitforge-server`)
+## Interactive server (`cmd/sentinelx-server`)
 
 Runs the audit behind HTTP and streams progress to the web UI, so you can
 submit a GitHub repo in the browser and watch it get audited live.
@@ -196,7 +196,7 @@ submit a GitHub repo in the browser and watch it get audited live.
 ```
 # build the UI once, then run the server (it serves the UI + the API):
 cd web && npm install && npm run build && cd ..
-go run ./cmd/exploitforge-server -solc $(which solc)        # http://localhost:8080
+go run ./cmd/sentinelx-server -solc $(which solc)        # http://localhost:8080
 ```
 
 - `GET /api/health` — provider/model status.
@@ -207,7 +207,7 @@ The server clones the repo, runs `forge build` (installing `forge-std` if the
 repo didn't vendor it), then ingests → hypothesizes → proves → reports.
 
 For local development you can run the UI with `npm run dev` (its dev server
-proxies `/api` to `:8080`), and set `EXPLOITFORGE_ALLOW_LOCAL=1` to audit a
+proxies `/api` to `:8080`), and set `SENTINELX_ALLOW_LOCAL=1` to audit a
 local project path instead of a GitHub URL.
 
 > **Security:** an audit compiles and runs code from the submitted repo *and*
@@ -224,7 +224,7 @@ the success invariant, trace evidence, attack path, and reproducible PoC.
 
 ```
 # produce a machine-readable report from an audit:
-go run ./cmd/exploitforge -project ./demo -auto -solc $(which solc) -report-json web/public/audit.json
+go run ./cmd/sentinelx -project ./demo -auto -solc $(which solc) -report-json web/public/audit.json
 
 # then run the UI:
 cd web && npm install && npm run dev      # or: npm run build

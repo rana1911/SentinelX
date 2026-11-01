@@ -31,7 +31,7 @@ package verify
 import (
 	"fmt"
 
-	"github.com/rana1911/exploitforge/internal/trace"
+	"github.com/rana1911/sentinelx/internal/trace"
 )
 
 type Verdict string

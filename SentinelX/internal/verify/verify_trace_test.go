@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/rana1911/exploitforge/internal/trace"
+	"github.com/rana1911/sentinelx/internal/trace"
 )
 
 // These tests run against REAL `forge test --json -vvvv` output captured

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/rana1911/exploitforge/internal/agent"
-	"github.com/rana1911/exploitforge/internal/orchestrator"
-	"github.com/rana1911/exploitforge/internal/verify"
+	"github.com/rana1911/sentinelx/internal/agent"
+	"github.com/rana1911/sentinelx/internal/orchestrator"
+	"github.com/rana1911/sentinelx/internal/verify"
 )
 
 func sampleResults() []orchestrator.Result {

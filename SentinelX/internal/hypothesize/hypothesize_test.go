@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/rana1911/exploitforge/internal/agent"
+	"github.com/rana1911/sentinelx/internal/agent"
 )
 
 type fakeCompleter struct {

@@ -60,7 +60,7 @@ func Prepare(ctx context.Context, src string, solc string, log Logf) (*Prepared,
 
 	switch {
 	case IsGitHubURL(src):
-		dst, err := os.MkdirTemp("", "exploitforge-repo-")
+		dst, err := os.MkdirTemp("", "sentinelx-repo-")
 		if err != nil {
 			return nil, err
 		}

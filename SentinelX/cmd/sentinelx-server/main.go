@@ -1,4 +1,4 @@
-// Command exploitforge-server exposes the audit pipeline over HTTP so the web
+// Command sentinelx-server exposes the audit pipeline over HTTP so the web
 // UI can submit a repository and watch the audit stream back. It serves the
 // built UI (from -web) and two endpoints:
 //
@@ -8,7 +8,7 @@
 // SECURITY: an audit compiles and runs code from the submitted repo plus
 // AI-written exploits. That is untrusted code executed on this host. Run this
 // behind a sandbox (container/VM, no secrets, limited network) before exposing
-// it publicly. For a local demo it's fine. Set EXPLOITFORGE_ALLOW_LOCAL=1 to
+// it publicly. For a local demo it's fine. Set SENTINELX_ALLOW_LOCAL=1 to
 // also accept local directory paths (handy for testing without a GitHub repo).
 package main
 
@@ -22,20 +22,20 @@ import (
 	"os"
 	"time"
 
-	"github.com/rana1911/exploitforge/internal/agent"
-	"github.com/rana1911/exploitforge/internal/fetchrepo"
-	"github.com/rana1911/exploitforge/internal/pipeline"
+	"github.com/rana1911/sentinelx/internal/agent"
+	"github.com/rana1911/sentinelx/internal/fetchrepo"
+	"github.com/rana1911/sentinelx/internal/pipeline"
 )
 
 func main() {
 	addr := flag.String("addr", ":8080", "listen address")
 	webDir := flag.String("web", "web/dist", "directory of the built web UI (optional)")
-	solc := flag.String("solc", os.Getenv("EXPLOITFORGE_SOLC"), "solc binary for forge --use (optional)")
+	solc := flag.String("solc", os.Getenv("SENTINELX_SOLC"), "solc binary for forge --use (optional)")
 	maxHyp := flag.Int("max-hypotheses", 6, "cap on hypotheses per audit")
 	conc := flag.Int("concurrency", 3, "max hypotheses proven in parallel")
 	flag.Parse()
 
-	srv := &server{solc: *solc, maxHyp: *maxHyp, conc: *conc, allowLocal: os.Getenv("EXPLOITFORGE_ALLOW_LOCAL") == "1"}
+	srv := &server{solc: *solc, maxHyp: *maxHyp, conc: *conc, allowLocal: os.Getenv("SENTINELX_ALLOW_LOCAL") == "1"}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/health", srv.health)
@@ -47,7 +47,7 @@ func main() {
 		log.Printf("no web UI at %s (API only); build it with: cd web && npm run build", *webDir)
 	}
 
-	log.Printf("exploitforge-server listening on %s", *addr)
+	log.Printf("sentinelx-server listening on %s", *addr)
 	if err := http.ListenAndServe(*addr, mux); err != nil {
 		log.Fatal(err)
 	}

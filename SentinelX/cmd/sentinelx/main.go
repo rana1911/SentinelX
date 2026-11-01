@@ -1,4 +1,4 @@
-// Command exploitforge wires the real LLM client, the forge runner, and the
+// Command sentinelx wires the real LLM client, the forge runner, and the
 // orchestrator loop together and runs one hypothesis end to end: ask the
 // model for a proof-of-concept, run it in a forge project, and let the
 // deterministic verify layer decide whether it genuinely demonstrates the
@@ -8,9 +8,9 @@
 // Usage:
 //
 //	export ANTHROPIC_API_KEY=...            # provider auto-detects to claude
-//	exploitforge -project ./demo -job job.json
+//	sentinelx -project ./demo -job job.json
 //
-// The provider is chosen by agent.NewFromEnv (EXPLOITFORGE_PROVIDER, or
+// The provider is chosen by agent.NewFromEnv (SENTINELX_PROVIDER, or
 // auto). The job file describes the target and the hypothesis; see JobSpec
 // and -print-example.
 package main
@@ -26,11 +26,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/rana1911/exploitforge/internal/agent"
-	"github.com/rana1911/exploitforge/internal/hypothesize"
-	"github.com/rana1911/exploitforge/internal/orchestrator"
-	"github.com/rana1911/exploitforge/internal/runner"
-	"github.com/rana1911/exploitforge/internal/verify"
+	"github.com/rana1911/sentinelx/internal/agent"
+	"github.com/rana1911/sentinelx/internal/hypothesize"
+	"github.com/rana1911/sentinelx/internal/orchestrator"
+	"github.com/rana1911/sentinelx/internal/runner"
+	"github.com/rana1911/sentinelx/internal/verify"
 )
 
 // JobSpec is one audit job: which forge project to run in, how the harness
@@ -64,7 +64,7 @@ func main() {
 	var (
 		projectDir  = flag.String("project", "", "path to a forge project (foundry.toml, lib/forge-std, src/)")
 		jobPath     = flag.String("job", "", "path to a job JSON file (see -print-example)")
-		solc        = flag.String("solc", os.Getenv("EXPLOITFORGE_SOLC"), "solc binary to pass to forge --use (optional)")
+		solc        = flag.String("solc", os.Getenv("SENTINELX_SOLC"), "solc binary to pass to forge --use (optional)")
 		maxAtt      = flag.Int("max-attempts", orchestrator.MaxAttemptsDefault, "max generate/run/verify rounds")
 		timeout     = flag.Duration("timeout", 90*time.Second, "per forge invocation timeout")
 		jsonOut     = flag.Bool("json", false, "emit the result as JSON")
@@ -96,7 +96,7 @@ func main() {
 	}
 	if *ingestOnly {
 		if *projectDir == "" {
-			fmt.Fprintln(os.Stderr, "exploitforge: -ingest needs -project")
+			fmt.Fprintln(os.Stderr, "sentinelx: -ingest needs -project")
 			os.Exit(2)
 		}
 		runIngest(*projectDir, *hypoName, *solc, *timeout)
@@ -104,7 +104,7 @@ func main() {
 	}
 	if *auto {
 		if *projectDir == "" {
-			fmt.Fprintln(os.Stderr, "exploitforge: -auto needs -project")
+			fmt.Fprintln(os.Stderr, "sentinelx: -auto needs -project")
 			os.Exit(2)
 		}
 		os.Exit(runAudit(auditOpts{
@@ -122,7 +122,7 @@ func main() {
 	}
 	if *auditPath != "" {
 		if *projectDir == "" {
-			fmt.Fprintln(os.Stderr, "exploitforge: -audit also needs -project (the forge project to run in)")
+			fmt.Fprintln(os.Stderr, "sentinelx: -audit also needs -project (the forge project to run in)")
 			os.Exit(2)
 		}
 		os.Exit(runAudit(auditOpts{
@@ -138,7 +138,7 @@ func main() {
 		}))
 	}
 	if *projectDir == "" || *jobPath == "" {
-		fmt.Fprintln(os.Stderr, "exploitforge: -project and -job are required (try -print-example, -hypothesize, or -audit)")
+		fmt.Fprintln(os.Stderr, "sentinelx: -project and -job are required (try -print-example, -hypothesize, or -audit)")
 		os.Exit(2)
 	}
 
@@ -155,7 +155,7 @@ func main() {
 	if err != nil {
 		fail(err)
 	}
-	fmt.Fprintf(os.Stderr, "exploitforge: provider=%s model=%s project=%s\n", client.Provider, client.Model, *projectDir)
+	fmt.Fprintf(os.Stderr, "sentinelx: provider=%s model=%s project=%s\n", client.Provider, client.Model, *projectDir)
 
 	r := runner.NewForgeRunner(*projectDir, cfg, runner.LocalBackend{})
 	r.SolcPath = *solc
@@ -203,7 +203,7 @@ func runHypothesize(srcPath, contractName string, max int) {
 	if err != nil {
 		fail(err)
 	}
-	fmt.Fprintf(os.Stderr, "exploitforge: provider=%s model=%s hypothesizing %s\n", client.Provider, client.Model, contractName)
+	fmt.Fprintf(os.Stderr, "sentinelx: provider=%s model=%s hypothesizing %s\n", client.Provider, client.Model, contractName)
 
 	h := hypothesize.New(client)
 	h.Max = max
@@ -215,7 +215,7 @@ func runHypothesize(srcPath, contractName string, max int) {
 	if err != nil {
 		fail(err)
 	}
-	fmt.Fprintf(os.Stderr, "exploitforge: %d hypothesis(es)\n", len(hs))
+	fmt.Fprintf(os.Stderr, "sentinelx: %d hypothesis(es)\n", len(hs))
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "  ")
 	enc.Encode(agent.HypothesisSet{Hypotheses: hs})
@@ -332,7 +332,7 @@ func resultView(res orchestrator.Result) view {
 }
 
 func fail(err error) {
-	fmt.Fprintln(os.Stderr, "exploitforge:", err)
+	fmt.Fprintln(os.Stderr, "sentinelx:", err)
 	os.Exit(1)
 }
 

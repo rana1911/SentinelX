@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/rana1911/exploitforge/internal/keccak"
-	"github.com/rana1911/exploitforge/internal/trace"
+	"github.com/rana1911/sentinelx/internal/keccak"
+	"github.com/rana1911/sentinelx/internal/trace"
 )
 
 // CheatcodeAddress is the fixed address Foundry's VM cheatcodes live at.

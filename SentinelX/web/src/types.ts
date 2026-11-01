@@ -1,4 +1,4 @@
-// Mirrors internal/report/json.go (the `exploitforge -report-json` output).
+// Mirrors internal/report/json.go (the `sentinelx -report-json` output).
 export type Verdict = "verified" | "rejected" | "inconclusive";
 
 export interface Summary {
@@ -35,7 +35,7 @@ export interface AuditReport {
   findings: Finding[];
 }
 
-// Server-Sent Event from exploitforge-server (mirrors internal/pipeline.Event).
+// Server-Sent Event from sentinelx-server (mirrors internal/pipeline.Event).
 export interface PipelineEvent {
   stage: "ingest" | "note" | "hypothesize" | "prove" | "verdict" | "report" | "done" | "error";
   message: string;

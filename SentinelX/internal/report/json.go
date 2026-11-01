@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/rana1911/exploitforge/internal/orchestrator"
-	"github.com/rana1911/exploitforge/internal/verify"
+	"github.com/rana1911/sentinelx/internal/orchestrator"
+	"github.com/rana1911/sentinelx/internal/verify"
 )
 
 // JSONReport is the machine-readable audit result consumed by the web UI

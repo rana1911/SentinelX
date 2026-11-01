@@ -10,8 +10,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/rana1911/exploitforge/internal/orchestrator"
-	"github.com/rana1911/exploitforge/internal/verify"
+	"github.com/rana1911/sentinelx/internal/orchestrator"
+	"github.com/rana1911/sentinelx/internal/verify"
 )
 
 // Summary is the headline count across an audit.
@@ -43,7 +43,7 @@ func Summarize(target string, results []orchestrator.Result) Summary {
 // findings are promoted to the top regardless.
 func Markdown(w io.Writer, target string, results []orchestrator.Result) {
 	s := Summarize(target, results)
-	fmt.Fprintf(w, "# ExploitForge audit: %s\n\n", mdEsc(target))
+	fmt.Fprintf(w, "# SentinelX audit: %s\n\n", mdEsc(target))
 	fmt.Fprintf(w, "**%d verified**, %d rejected, %d inconclusive out of %d hypotheses tested.\n\n",
 		s.Verified, s.Rejected, s.Inconclusive, s.Total)
 	fmt.Fprintln(w, "Every verified finding below was proven by an exploit that compiled and ran")

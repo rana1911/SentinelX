@@ -15,13 +15,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rana1911/exploitforge/internal/agent"
-	"github.com/rana1911/exploitforge/internal/hypothesize"
-	"github.com/rana1911/exploitforge/internal/ingest"
-	"github.com/rana1911/exploitforge/internal/orchestrator"
-	"github.com/rana1911/exploitforge/internal/report"
-	"github.com/rana1911/exploitforge/internal/runner"
-	"github.com/rana1911/exploitforge/internal/verify"
+	"github.com/rana1911/sentinelx/internal/agent"
+	"github.com/rana1911/sentinelx/internal/hypothesize"
+	"github.com/rana1911/sentinelx/internal/ingest"
+	"github.com/rana1911/sentinelx/internal/orchestrator"
+	"github.com/rana1911/sentinelx/internal/report"
+	"github.com/rana1911/sentinelx/internal/runner"
+	"github.com/rana1911/sentinelx/internal/verify"
 )
 
 // Spec is the harness/runner configuration plus the contract to read. It is
@@ -250,7 +250,7 @@ func vulnClass(s string) verify.VulnClass {
 // freshProjectCopy makes an isolated copy of a forge project (foundry.toml +
 // src copied, lib symlinked) so per-task runners never race on test files.
 func freshProjectCopy(base string) (string, error) {
-	dst, err := os.MkdirTemp("", "exploitforge-proj-")
+	dst, err := os.MkdirTemp("", "sentinelx-proj-")
 	if err != nil {
 		return "", err
 	}

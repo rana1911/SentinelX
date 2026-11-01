@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rana1911/exploitforge/internal/trace"
-	"github.com/rana1911/exploitforge/internal/verify"
+	"github.com/rana1911/sentinelx/internal/trace"
+	"github.com/rana1911/sentinelx/internal/verify"
 )
 
 type caseSpec struct {

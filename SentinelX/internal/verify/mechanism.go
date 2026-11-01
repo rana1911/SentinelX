@@ -10,8 +10,8 @@ package verify
 import (
 	"fmt"
 
-	"github.com/rana1911/exploitforge/internal/keccak"
-	"github.com/rana1911/exploitforge/internal/trace"
+	"github.com/rana1911/sentinelx/internal/keccak"
+	"github.com/rana1911/sentinelx/internal/trace"
 )
 
 // TargetInvocation is evidence that the exploit actually called the

@@ -1,6 +1,6 @@
 import type { AuditReport } from "./types";
 
-// Bundled sample (real `exploitforge -report-json` output) so the UI renders
+// Bundled sample (real `sentinelx -report-json` output) so the UI renders
 // with no backend. In dev/prod it first tries to fetch ./audit.json and falls
 // back to this.
 export const sampleAudit: AuditReport = {

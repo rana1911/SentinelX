@@ -66,7 +66,7 @@ export function App() {
       setEvents((prev) => [...prev, ev]);
     };
     es.onerror = () => {
-      setError((prev) => prev ?? "connection to the audit server was lost (is exploitforge-server running?)");
+      setError((prev) => prev ?? "connection to the audit server was lost (is sentinelx-server running?)");
       es.close();
     };
   }
@@ -84,7 +84,7 @@ export function App() {
       <header className="hero">
         <Logo />
         <div>
-          <h1>ExploitForge</h1>
+          <h1>SentinelX</h1>
           <div className="tag">
             Proof-carrying smart-contract auditing — <b>every finding is a running exploit</b>, not a guess.
           </div>
