@@ -138,10 +138,32 @@ func (s *server) audit(w http.ResponseWriter, r *http.Request) {
 		fail(err.Error())
 		return
 	}
+	// persist the finished report so audits aren't lost
+	if err := os.MkdirAll("reports", 0o755); err == nil {
+		name := fmt.Sprintf("reports/%s-%s.json",
+			time.Now().Format("20060102-150405"), safeName(jr.Target))
+		if f, err := os.Create(name); err == nil {
+			enc := json.NewEncoder(f)
+			enc.SetIndent("", "  ")
+			enc.Encode(jr)
+			f.Close()
+			log.Printf("saved report: %s", name)
+		}
+	}
 	send(pipeline.Event{Stage: "done", Message: "audit complete", Report: &jr})
 }
 
 func writeJSON(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+func safeName(s string) string {
+	b := []rune(s)
+	for i, r := range b {
+		if !((r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '-' || r == '_') {
+			b[i] = '_'
+		}
+	}
+	return string(b)
 }

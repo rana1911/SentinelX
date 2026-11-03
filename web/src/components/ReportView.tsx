@@ -21,6 +21,19 @@ export function ReportView({ report, onReset }: { report: AuditReport; onReset?:
         {report.model && <span className="chip">model: {report.model}</span>}
         <span className="chip">{summary.total} hypotheses tested</span>
         <span className="spacer" />
+        <button
+          className="btn ghost"
+          onClick={() => {
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `${report.target || "audit"}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+          }}
+        >
+          Download
+        </button>
         {onReset && (
           <button className="btn ghost" onClick={onReset}>
             New audit

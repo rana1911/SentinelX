@@ -62,6 +62,7 @@ type Client struct {
 	NoJSONMode      bool              // provider ignores/doesn't support response_format
 	MaxTokens       int               // 0 = don't send
 	ExtraHeaders    map[string]string // e.g. anthropic-workspace-id
+	ReasoningEffort string
 }
 
 // NewFromEnv builds a client for the provider in SENTINELX_PROVIDER
@@ -121,8 +122,13 @@ func newMeta() (*Client, error) {
 		BaseURL:    strings.TrimRight(os.Getenv("META_API_BASE"), "/"),
 		APIKey:     os.Getenv("META_API_KEY"),
 		Model:      os.Getenv("META_MODEL"),
-		HTTP:       &http.Client{Timeout: 120 * time.Second},
+		HTTP:       &http.Client{Timeout: 300 * time.Second},
 		MaxRetries: 4,
+
+		OmitTemperature: true,   // reasoning models reject temperature
+		NoJSONMode:      true,   // ExtractJSON already tolerates non-JSON
+		MaxTokens:       32000,  // reasoning tokens eat the budget; leave room for real output
+		ReasoningEffort: "low",   // don't over-reason; leaves room for output and is faster
 	}
 	if c.BaseURL == "" || c.APIKey == "" || c.Model == "" {
 		return nil, errors.New("meta provider: set META_API_BASE, META_API_KEY and META_MODEL")
@@ -143,6 +149,7 @@ type chatRequest struct {
 	Temperature    *float64          `json:"temperature,omitempty"`
 	MaxTokens      int               `json:"max_tokens,omitempty"`
 	ResponseFormat map[string]string `json:"response_format,omitempty"`
+	ReasoningEffort string `json:"reasoning_effort,omitempty"`
 }
 
 type chatResponse struct {
@@ -159,7 +166,7 @@ type chatResponse struct {
 // the field if Spark lacks it; ExtractJSON still copes with fenced output).
 // Retries 429/5xx and network errors with exponential backoff plus jitter.
 func (c *Client) Complete(ctx context.Context, msgs []Message, temp float64, jsonMode bool) (string, error) {
-	req := chatRequest{Model: c.Model, Messages: msgs, MaxTokens: c.MaxTokens}
+	req := chatRequest{Model: c.Model, Messages: msgs, MaxTokens: c.MaxTokens, ReasoningEffort: c.ReasoningEffort}
 	if !c.OmitTemperature {
 		req.Temperature = &temp
 	}

@@ -1,0 +1,17 @@
+# secrets
+.env
+.env.*
+# Go binaries / tests
+/sentinelx
+/sentinelx-server
+*.exe
+*.test
+# Foundry
+out/
+cache/
+lib/
+# runtime audit outputs
+reports/
+# node
+node_modules/
+dist/
