@@ -178,14 +178,6 @@ Claude is the development stand-in; the submitted build must run on a Meta
 model. Because the loop depends only on the `Completer` interface, switching
 providers is one env var — no loop/runner/verify changes.
 
-## Still to build
-
-- **Docker-sandbox `Backend`** for `internal/runner` (the `LocalBackend` and
-  the interface exist; the sandboxed backend for untrusted code is the swap).
-- Optional dedicated mechanism detectors (reentrancy exists; access-control,
-  oracle, share-inflation would add bonus evidence on top of the invariant gate).
-- Confirm/wire the real Meta Muse Spark API for submission.
-
 
 
 ## Interactive server (`cmd/sentinelx-server`)
