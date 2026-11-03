@@ -1,5 +1,3 @@
-LLM_1773857173670181_3bSgg7eiYrwmFZc3KP9BqR-ZQCY
-
 # SentinelX
 
 A self-verifying smart-contract auditor: Muse Spark hypothesizes
